@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline as ImbPipeline
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 import warnings
 from pathlib import Path
@@ -21,6 +22,7 @@ class ThreatPrediction:
 
 class ThreatClassifier:
     CLASSES = ["benign", "brute_force", "lateral_movement", "data_exfiltration", "c2_beaconing"]
+    N_FEATURES = 15  # Updated: bytes_sent_log, bytes_ratio, conn_rate_zscore added
     
     FEATURE_NAMES = [
         "if_anomaly_score",
@@ -55,21 +57,26 @@ class ThreatClassifier:
             k_neighbors = min(5, min_samples - 1)
             if k_neighbors > 0:
                 smote = SMOTE(random_state=42, k_neighbors=k_neighbors)
+                
+                # Cross validation with Pipeline to prevent SMOTE data leakage into validation folds
+                n_splits = min(5, min_samples)
+                if n_splits > 1:
+                    cv_model = ImbPipeline([
+                        ('smote', smote),
+                        ('classifier', self.model)
+                    ])
+                    cv = StratifiedKFold(n_splits=n_splits)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        scores = cross_val_score(cv_model, X, y, cv=cv, scoring='f1_weighted')
+                    print(f"Cross-Validation F1 Scores: {scores}")
+                    print(f"Mean CV F1: {np.mean(scores):.2f}")
+
                 try:
                     X, y = smote.fit_resample(X, y)
-                    print(f"Applied SMOTE. New class distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
+                    print(f"Applied final SMOTE. New class distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
                 except Exception as e:
                     print(f"SMOTE skipped: {e}")
-            
-            # Cross validation
-            n_splits = min(5, min_samples)
-            if n_splits > 1:
-                cv = StratifiedKFold(n_splits=n_splits)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    scores = cross_val_score(self.model, X, y, cv=cv, scoring='f1_weighted')
-                print(f"Cross-Validation F1 Scores: {scores}")
-                print(f"Mean CV F1: {np.mean(scores):.2f}")
 
         self.model.fit(X, y)
         self.is_fitted = True
