@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+venv/
+.venv/
+# Data files (too large for git)
+data/raw/*.jsonl
+data/raw/*.csv
+data/processed/*.jsonl
+# ML Models (large binary files)
+data/models/*.pkl
+data/models/*.pt
+# Node
+node_modules/
+frontend/dist/
+frontend/.env
+# OS
+.DS_Store
+*.log
