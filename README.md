@@ -10,8 +10,8 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  FRONTEND  (frontend/index.html)                        │
-│  Three.js 3D attack universe · Socket.IO real-time     │
-│  Cyberpunk dashboard · 4-scenario offline fallback     │
+│  Three.js 3D attack universe · Socket.IO real-time      │
+│  Cyberpunk dashboard · 4-scenario offline fallback      │
 └────────────────────────┬────────────────────────────────┘
                          │ WebSocket + REST
 ┌────────────────────────▼────────────────────────────────┐
