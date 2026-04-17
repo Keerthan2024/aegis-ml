@@ -12,6 +12,7 @@ data/processed/*.jsonl
 # ML Models (large binary files)
 data/models/*.pkl
 data/models/*.pt
+data/models/*.joblib
 # Node
 node_modules/
 frontend/dist/
@@ -19,3 +20,11 @@ frontend/.env
 # OS
 .DS_Store
 *.log
+# Evaluation & training output files
+train_output.txt
+eval_output.txt
+# Real-world datasets (large CSVs)
+datasets/
+# Misc scratch files
+run_eval.py
+evaluate_holdout.py
