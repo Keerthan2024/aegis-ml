@@ -6,7 +6,7 @@ import AlertFeed from './AlertFeed'
 import AttackGraph from './AttackGraph'
 import IncidentCard from './IncidentCard'
 
-const API = '/api'
+const API = import.meta.env.VITE_API_URL || '/api'
 
 /* ── Stat card ────────────────────────────────────────────────────────────── */
 function StatCard({ label, value, unit = '', accentVar, icon: Icon, delay = 0 }) {
