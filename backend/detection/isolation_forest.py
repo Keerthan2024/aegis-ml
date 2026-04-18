@@ -6,11 +6,12 @@ from sklearn.ensemble import IsolationForest
 import os
 from pathlib import Path
 
-from backend.core.schemas import UnifiedEvent
-from backend.core.config import (
-    IF_NETWORK_PATH,
-    IF_ENDPOINT_PATH
-)
+try:
+    from core.schemas import UnifiedEvent
+    from core.config import IF_NETWORK_PATH, IF_ENDPOINT_PATH
+except ModuleNotFoundError:
+    from backend.core.schemas import UnifiedEvent
+    from backend.core.config import IF_NETWORK_PATH, IF_ENDPOINT_PATH
 
 class IsolationForestDetector:
     def __init__(self):

@@ -1,0 +1,20 @@
+# AEGIS Backend Requirements
+# Compatible with Python 3.14+
+
+# Web framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+python-dotenv>=1.0.1
+
+# Data & ML
+numpy>=2.0.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+imbalanced-learn>=0.12.2
+joblib>=1.4.0
+networkx>=3.3
+
+# Utilities
+faker>=24.0.0
+websockets>=12.0

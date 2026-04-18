@@ -36,30 +36,23 @@
 
 ## Quick Start
 
-### 1. Install Python dependencies
+### 1. Start the Backend Server
 
 ```bash
-cd aegis_ml
+cd backend
 pip install -r requirements.txt
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+# → http://localhost:8000
 ```
 
-### 2. Start the backend server
+### 2. Start the Frontend Server
 
 ```bash
-python server.py
-# → http://0.0.0.0:5000
+cd frontend
+npm install
+npm run dev
+# → http://localhost:5173
 ```
-
-### 3. Open the frontend
-
-```bash
-open frontend/index.html
-# or serve it:
-python -m http.server 8080 --directory frontend
-# → http://localhost:8080
-```
-
-> **No server needed for the demo!** The frontend has all 4 scenarios embedded as offline fallback data. Just open `frontend/index.html` directly.
 
 ---
 

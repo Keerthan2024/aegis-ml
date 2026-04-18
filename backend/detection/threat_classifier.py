@@ -6,15 +6,16 @@ from dataclasses import dataclass
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report
 from imblearn.over_sampling import SMOTE
-<<<<<<< HEAD
-=======
 from imblearn.pipeline import Pipeline as ImbPipeline
->>>>>>> 25e60573f5d432f432c5ea47233306c717440662
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 import warnings
 from pathlib import Path
 
-from backend.core.config import RF_CLASSIFIER_PATH
+try:
+    from core.config import RF_CLASSIFIER_PATH
+except ModuleNotFoundError:
+    from backend.core.config import RF_CLASSIFIER_PATH
+
 
 @dataclass
 class ThreatPrediction:
@@ -23,65 +24,41 @@ class ThreatPrediction:
     severity: Optional[str]
     feature_importances: Dict[str, float]
 
+
 class ThreatClassifier:
     CLASSES = ["benign", "brute_force", "lateral_movement", "data_exfiltration", "c2_beaconing"]
-<<<<<<< HEAD
-=======
-    N_FEATURES = 15  # Updated: bytes_sent_log, bytes_ratio, conn_rate_zscore added
->>>>>>> 25e60573f5d432f432c5ea47233306c717440662
-    
+    N_FEATURES = 15  # if_score, baseline_dev, graph_new_conn, failed_auth, conn_freq,
+                     # bytes_sent_zscore, bytes_sent_log, bytes_ratio, conn_rate_zscore,
+                     # dst_port_risk, is_new_dest, is_external_dst, hour_sin, hour_cos, cross_layer
+
     FEATURE_NAMES = [
-        "if_anomaly_score",
-        "baseline_deviation",
-        "graph_new_connections",
-        "failed_auth_rate",
-        "connection_frequency",
-        "bytes_sent_zscore",
-        "dst_port_risk",
-        "is_new_destination",
-        "is_external_dst",
-        "hour_of_day_sin",
-        "hour_of_day_cos",
-        "cross_layer_match"
+        "if_anomaly_score", "baseline_deviation", "graph_new_connections",
+        "failed_auth_rate", "connection_frequency", "bytes_sent_zscore",
+        "bytes_sent_log", "bytes_ratio", "conn_rate_zscore",
+        "dst_port_risk", "is_new_destination", "is_external_dst",
+        "hour_of_day_sin", "hour_of_day_cos", "cross_layer_match"
     ]
 
     def __init__(self):
         self.model = RandomForestClassifier(
-            n_estimators=300, 
-            max_depth=15, 
-            random_state=42, 
+            n_estimators=300,
+            max_depth=15,
+            random_state=42,
             class_weight="balanced"
         )
         self.is_fitted = False
 
-    def fit(self, X: np.array, y: np.array) -> None:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         unique_classes, counts = np.unique(y, return_counts=True)
-        min_samples = np.min(counts)
-        
-        # Apply SMOTE if we have imbalanced classes with enough samples
+        min_samples = int(np.min(counts))
+
+        # Apply SMOTE + cross-validation if we have enough imbalanced samples
         if len(unique_classes) > 1 and min_samples > 1:
             k_neighbors = min(5, min_samples - 1)
             if k_neighbors > 0:
                 smote = SMOTE(random_state=42, k_neighbors=k_neighbors)
-<<<<<<< HEAD
-                try:
-                    X, y = smote.fit_resample(X, y)
-                    print(f"Applied SMOTE. New class distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
-                except Exception as e:
-                    print(f"SMOTE skipped: {e}")
-            
-            # Cross validation
-            n_splits = min(5, min_samples)
-            if n_splits > 1:
-                cv = StratifiedKFold(n_splits=n_splits)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    scores = cross_val_score(self.model, X, y, cv=cv, scoring='f1_weighted')
-                print(f"Cross-Validation F1 Scores: {scores}")
-                print(f"Mean CV F1: {np.mean(scores):.2f}")
-=======
-                
-                # Cross validation with Pipeline to prevent SMOTE data leakage into validation folds
+
+                # Cross-validation with ImbPipeline to prevent SMOTE leaking into validation folds
                 n_splits = min(5, min_samples)
                 if n_splits > 1:
                     cv_model = ImbPipeline([
@@ -97,50 +74,42 @@ class ThreatClassifier:
 
                 try:
                     X, y = smote.fit_resample(X, y)
-                    print(f"Applied final SMOTE. New class distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
+                    print(f"Applied SMOTE. Class distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
                 except Exception as e:
                     print(f"SMOTE skipped: {e}")
->>>>>>> 25e60573f5d432f432c5ea47233306c717440662
 
         self.model.fit(X, y)
         self.is_fitted = True
-        
-        # Print classification report on training data
+
         y_pred = self.model.predict(X)
         print("Threat Classifier Training Report:")
         print(classification_report(y, y_pred, labels=self.CLASSES))
 
     def predict(self, features: List[float]) -> ThreatPrediction:
         if not self.is_fitted:
-            # Fallback if not fitted, predict benign
             return ThreatPrediction(
                 threat_type="benign",
                 confidence=1.0,
                 severity=None,
                 feature_importances={}
             )
-            
+
         X = np.array([features])
-        
-        # Predict probabilities
         probas = self.model.predict_proba(X)[0]
-        
-        # Get max class probability and index
-        max_idx = np.argmax(probas)
+        max_idx = int(np.argmax(probas))
         confidence = float(probas[max_idx])
-        
-        # The classes_ attribute contains the unique classes the model saw during fit
         predicted_class = self.model.classes_[max_idx]
-        
+
         severity = self.severity_from_confidence(confidence) if predicted_class != "benign" else None
-        
+
         importances = {}
         if hasattr(self.model, "feature_importances_"):
             importances = {
-                self.FEATURE_NAMES[i]: float(val) 
+                self.FEATURE_NAMES[i]: float(val)
                 for i, val in enumerate(self.model.feature_importances_)
+                if i < len(self.FEATURE_NAMES)
             }
-            
+
         return ThreatPrediction(
             threat_type=predicted_class,
             confidence=confidence,
@@ -158,16 +127,14 @@ class ThreatClassifier:
     def save(self) -> None:
         if self.is_fitted:
             Path(RF_CLASSIFIER_PATH).parent.mkdir(parents=True, exist_ok=True)
-            # Save a tuple containing whether it is fitted and the model
             joblib.dump({"is_fitted": self.is_fitted, "model": self.model}, RF_CLASSIFIER_PATH)
 
     def load(self) -> None:
         if os.path.exists(RF_CLASSIFIER_PATH):
             data = joblib.load(RF_CLASSIFIER_PATH)
             if isinstance(data, dict) and "is_fitted" in data and "model" in data:
-                 self.is_fitted = data["is_fitted"]
-                 self.model = data["model"]
+                self.is_fitted = data["is_fitted"]
+                self.model = data["model"]
             else:
-                 # Backward compatibility if only model was saved
-                 self.model = data
-                 self.is_fitted = True
+                self.model = data
+                self.is_fitted = True

@@ -4,8 +4,12 @@ import os
 from typing import List, Dict
 from pathlib import Path
 
-from backend.core.schemas import UnifiedEvent
-from backend.core.config import BASELINES_PATH
+try:
+    from core.schemas import UnifiedEvent
+    from core.config import BASELINES_PATH
+except ModuleNotFoundError:
+    from backend.core.schemas import UnifiedEvent
+    from backend.core.config import BASELINES_PATH
 
 class BehavioralBaselineProfiler:
     def __init__(self):
